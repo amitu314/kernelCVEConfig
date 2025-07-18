@@ -127,9 +127,10 @@ def configMakefile(cve):
                                     matches.append(configName3)
                                 #print(f"Makefile matches for {filePath}: {matches}")
                                 
+            except Exception as e:
+              print(f"Error processing {makefilePath}: {e}")
 
-
-                print(f"""Makefile matches: 
+            print(f"""Makefile matches: 
 {matches}""")
  
  
