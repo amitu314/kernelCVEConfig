@@ -74,6 +74,61 @@ def configMakefile(cve):
                         configName = f"CONFIG_{match.group(1)}"
                         if configName not in matches:
                             matches.append(configName)
+                
+                groupPattern = re.compile(r'^([a-zA-Z0-9_]+)-y\s*[:+]?=\s*' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b')
+                for line in makefileContent.splitlines():
+                    wordMatch = groupPattern.search(line)
+                    if wordMatch:
+                        someword = wordMatch.group(1)
+                        # Now search for obj-$(CONFIG_...) += ... someword.<ext>
+                        altPattern = re.compile(
+                            r'obj-\$\(CONFIG_([A-Z0-9_]+)\)\s*\+=.*\b' + re.escape(someword) + r'\.[a-zA-Z0-9_]+\b'
+                        )
+                        for objline in makefileContent.splitlines():
+                            altMatch = altPattern.search(objline)
+                            if altMatch:
+                                configName = f"CONFIG_{altMatch.group(1)}"
+                                if configName not in matches:
+                                    matches.append(configName)
+                                #print(f"Makefile matches for {filePath}: {matches}")
+                                
+
+                groupPattern2 = re.compile(
+                    r'^([a-zA-Z0-9_]+)-objs\s*[:+]?=\s*(?:.*\\\s*\n)*?.*' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b',
+                    re.MULTILINE
+                )
+                for wordMatch2 in groupPattern2.finditer(makefileContent):
+                    print(f"Word Match 2: {wordMatch2.group(1)}")
+                    someword2 = wordMatch2.group(1)
+                    altPattern2 = re.compile(
+                        r'obj-\$\(CONFIG_([A-Z0-9_]+)\)\s*\+=\s*' + re.escape(someword2) + r'\.o\b'
+                    )
+                    for altMatch2 in altPattern2.finditer(makefileContent):
+                        configName2 = f"CONFIG_{altMatch2.group(1)}"
+                        if configName2 not in matches:
+                            matches.append(configName2)
+                                    #print(f"Makefile matches for {filePath}: {matches}")
+                                    
+                
+                groupPattern3 = re.compile(r'^([a-zA-Z0-9_]+)-y\s*[:+]?=\s*(?:.*\s)?' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b')
+                for line in makefileContent.splitlines():
+                    wordMatch = groupPattern3.search(line)
+                    if wordMatch:
+                        someword3 = wordMatch.group(1)
+                        # Now search for obj-$(CONFIG_...) += ... someword.<ext>
+                        altPattern3 = re.compile(
+                            r'obj-\$\(CONFIG_([A-Z0-9_]+)\)\s*\+=.*\b' + re.escape(someword3) + r'\.[a-zA-Z0-9_]+\b'
+                        )
+                        for objline in makefileContent.splitlines():
+                            altMatch2 = altPattern3.search(objline)
+                            if altMatch2:
+                                configName3 = f"CONFIG_{altMatch2.group(1)}"
+                                if configName3 not in matches:
+                                    matches.append(configName3)
+                                #print(f"Makefile matches for {filePath}: {matches}")
+                                
+
+
                 print(f"""Makefile matches: 
 {matches}""")
  
