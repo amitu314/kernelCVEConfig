@@ -82,6 +82,7 @@ def configMakefile(cve):
                         if configName not in matches:
                             matches.append(configName)
                 
+
                 # Enhanced pattern: Look for obj-$(CONFIG_X) += module.o, then module-y += file.o
                 objPattern = re.compile(r'obj-\$\(CONFIG_([A-Z0-9_]+)\)\s*\+=\s*([a-zA-Z0-9_]+)\.o')
                 for line in makefileContent.splitlines():
@@ -100,7 +101,8 @@ def configMakefile(cve):
                         if modulePattern1.search(joinedContent) or modulePattern2.search(joinedContent):
                             if configName not in matches:
                                 matches.append(configName)
-                
+
+
                 groupPattern = re.compile(r'^([a-zA-Z0-9_]+)-y\s*[:+]?=\s*' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b')
                 #groupPattern = re.compile(r'^([a-zA-Z0-9_]+)-y\s*[:+]?=.*\b' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b')
 
@@ -230,6 +232,69 @@ def configMakefile(cve):
                                     #print(f"Makefile matches for {filePath}: {matches}")
                                     #allMtches.extend(matches)
                
+               # file pointing to a word that points to obj-y
+                groupPattern8 = re.compile(
+                    r'^([a-zA-Z0-9_]+)-y\s*[:+]?=\s*(?:.*\\\s*\n)*?.*' + re.escape(fileNameWithoutExt) + r'\.[a-zA-Z0-9_]+\b',
+                    re.MULTILINE
+                )
+                for wordMatch8 in groupPattern8.finditer(makefileContent):
+                    #print(f"Word Match 2: {wordMatch5.group(1)}")
+                    someword8 = wordMatch8.group(1)
+                    print(f"Word Match 8: {someword8}")
+                    altPattern8 = re.compile(
+                        r'(obj-y)\s*(:=|=|:|:+|\+=)\s*' + re.escape(someword8) + r'\.[a-zA-Z0-9_]\b'
+                    )
+                    
+                    for altMatch8 in altPattern8.finditer(makefileContent):
+                        print(f"Alt Match 8: {altMatch8.group(1)}")
+                        if altMatch8.group(1) == "obj-y":
+                            print(f""" 
+                                  There is no CONFIG_* option for {someword8} in the snippet. {someword8} appears in the unconditional `obj-y` list, so it is built into the kernel image (built-in) rather than controlled by a Kconfig symbol. Built-in kernel config match found for {someword8}
+                                  """)
+                
+                builtInKernelConfig = re.compile(
+                    r'^(obj-y)\s*(:=|=|:|:+)\s*(?:.*\\\s*\n)*?.*?\b' + re.escape(fileNameWithoutExt) + r'\.o\b',
+                    re.MULTILINE
+                )
+                for wordMatch7 in builtInKernelConfig.finditer(makefileContent):
+                    #print(f"Word Match 5: {wordMatch5.group(1)}")
+                    someword7 = wordMatch7.group(1)
+                    #print(f"Word Match 5: {someword5}")
+                    if someword7 == "obj-y":
+                        print(f""" 
+                              There is no CONFIG_* option for {fileNameWithoutExt} in the snippet. {fileNameWithoutExt} appears in the unconditional `obj-y` list, so it is built into the kernel image (built-in) rather than controlled by a Kconfig symbol. Built-in kernel config match found for {fileNameWithoutExt}
+
+""")
+
+
+                #Note to self Addignthis for https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/drivers/usb/dwc3/Makefile?id=5a1a847d841505dba2bd85602daf5c218e1d85b8
+                ifneqPattern2 = re.compile(
+                    r'ifneq\s*\(\$\(filter\s+y,\s*\$\(CONFIG_([A-Z0-9_]+)\)\s*\$\(CONFIG_([A-Z0-9_]+)\)\s*\)\s*,\s*\)\s*(.*?)(?:else|endif)',
+                    re.DOTALL
+                )
+                for ifneqMatch in ifneqPattern2.finditer(makefileContent):
+                    configName1 = f"CONFIG_{ifneqMatch.group(1)}"
+                    configName2 = f"CONFIG_{ifneqMatch.group(2)}"
+                    blockContent = ifneqMatch.group(3)
+
+                    if re.search(r'\b' + re.escape(fileNameWithoutExt) + r'\.o\b', blockContent):
+                        if configName1 not in matches:
+                            matches.append(configName1)
+                        if configName2 not in matches:
+                            matches.append(configName2)
+
+                #Note to self Addignthis for https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/drivers/usb/dwc3/Makefile?id=5a1a847d841505dba2bd85602daf5c218e1d85b8
+                ifneqPattern3 = re.compile(
+                    r'ifneq\s*\(\$\(CONFIG_([A-Z0-9_]+)\)\s*,\s*\)\s*(.*?)(?:else|endif)',
+                    re.DOTALL
+                )
+                for ifneqMatch in ifneqPattern3.finditer(makefileContent):
+                    configName = f"CONFIG_{ifneqMatch.group(1)}"
+                    blockContent = ifneqMatch.group(2)
+
+                    if re.search(r'\b' + re.escape(fileNameWithoutExt) + r'\.o\b', blockContent):
+                        if configName not in matches:
+                            matches.append(configName)
                 
 
                 ifeqPattern = re.compile(
@@ -243,6 +308,10 @@ def configMakefile(cve):
                     if re.search(r'\b' + re.escape(fileNameWithoutExt) + r'\.o\b', blockContent):
                         if configName not in matches:
                             matches.append(configName)
+               
+                
+
+
 
                 print(f"Makefile matches for {filePath}: {matches}")
                 allMtches.extend(matches)
