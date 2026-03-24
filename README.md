@@ -5,3 +5,8 @@ If you are working on a kernel CVE triage and need to know the affected configur
 It looks at the CVE.org to get the affected files and then checks the **makefile** to get the configuration that needs to be checked for a CVE.
 
 `Note: this scripts tries to covers many use-cases but there may be use-cases that are not covered as part of this script. If you identified any use-case that is not covered, please feel free to contribute.`
+
+
+### How to Run
+
+``python3 kernelConfig.py --cve <CVENumber>``
