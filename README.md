@@ -1,5 +1,5 @@
 
-### kernelCVEConfig
+## kernelCVEConfig
 A Python-based utility to identify Linux kernel configuration options that influence whether a given kernel CVE may be relevant to a system.
 
 This project is intended to help security engineers, kernel developers, distro maintainers, DevSecOps teams, and researchers quickly map a kernel vulnerability to the CONFIG_* options that control the affected code paths.
